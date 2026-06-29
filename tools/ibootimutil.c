@@ -29,6 +29,7 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <libibootim.h>
 
 typedef enum {
@@ -90,6 +91,35 @@ void print_image_info(const char* title, ibootim_ctx_t ctx) {
         (ibootim_get_x_offset(ctx, &x_offset)     == IBOOTIM_E_SUCCESS) ? x_offset : x_offset,
         (ibootim_get_y_offset(ctx, &y_offset)     == IBOOTIM_E_SUCCESS) ? y_offset : y_offset
     );
+}
+
+char* path_add_index(const char* path, size_t index) {
+    const char* basename = strrchr(path, '/');
+    if (basename == NULL) basename = path;
+
+    const char* extension = strrchr(basename, '.');
+    if (extension == NULL) extension = path + strlen(path);
+
+    size_t base_len = (size_t)(extension - path);
+    if (base_len > INT_MAX) return NULL;
+
+    int index_chars = snprintf(NULL, 0, "%zu", index);
+    if (index_chars < 0) return NULL;
+
+    size_t ext_len = strlen(extension);
+    size_t needed  = base_len + 1 + (size_t)index_chars + ext_len + 1;
+    if (needed < base_len) return NULL;
+
+    char* dst = malloc(needed);
+    if (dst == NULL) return NULL;
+
+    int written = snprintf(dst, needed, "%.*s_%zu%s", (int)base_len, path, index, extension);
+    if (written < 0 || (size_t)written >= needed) {
+        free(dst);
+        return NULL;
+    }
+
+    return dst;
 }
 
 int main(int argc, char** argv) {
@@ -183,93 +213,116 @@ int main(int argc, char** argv) {
     ibootim_error_t error = IBOOTIM_E_SUCCESS;
     ibootim_ctx_t ctx     = NULL;
 
-    printf("Loading file %s...\n", input_filename);
-    error = ibootim_load_from_file(input_filename, &ctx);
+    size_t num_images = 0;
+    error = ibootim_count_images_in_file(input_filename, &num_images);
     if (error != IBOOTIM_E_SUCCESS) {
         fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
         free(output_filename);
         free(input_filename);
         return -1;
     }
+    printf("Image has %zu %s in it.\n", num_images, num_images == 1 ? "picture" : "pictures");
 
-    print_image_info("Input Image Info", ctx);
+    char* indexed_output_filename = NULL;
+    for (size_t i = 0; i < num_images; i++) {
+        if (num_images > 1) {
+            indexed_output_filename = path_add_index(output_filename, i);
+            if (indexed_output_filename == NULL) {
+                fprintf(stderr, "Error: Failed to allocate memory for indexed output filename.\n");
+                goto error_exit;
+            }
+        }
 
-    ibootim_type_t type = IBOOTIM_TYPE_UNKNOWN;
-    error = ibootim_get_type(ctx, &type);
-    if (error != IBOOTIM_E_SUCCESS) {
-        fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-        goto error_exit;
-    }
+        const char* write_path = (indexed_output_filename != NULL) ? indexed_output_filename : output_filename;
 
-    if (type == IBOOTIM_TYPE_PNG) {
-        printf("Converting to ibootim...\n");
+        printf("Loading file at index %zu...\n", i);
+        error = ibootim_load_from_file(input_filename, i, &ctx);
+        if (error != IBOOTIM_E_SUCCESS) {
+            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+            free(output_filename);
+            free(input_filename);
+            return -1;
+        }
 
-        error = ibootim_set_type(ctx, IBOOTIM_TYPE_MODERN);
+        print_image_info("Input Image Info", ctx);
+
+        ibootim_type_t type = IBOOTIM_TYPE_UNKNOWN;
+        error = ibootim_get_type(ctx, &type);
         if (error != IBOOTIM_E_SUCCESS) {
             fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
             goto error_exit;
         }
 
-        if (force_type == FORCE_TYPE_ARGB) {
-            error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
+        if (type == IBOOTIM_TYPE_PNG) {
+            error = ibootim_set_type(ctx, IBOOTIM_TYPE_MODERN);
             if (error != IBOOTIM_E_SUCCESS) {
                 fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
                 goto error_exit;
             }
-        }
 
-        if (force_type == FORCE_TYPE_GRAYSCALE) {
-            error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
+            if (force_type == FORCE_TYPE_ARGB) {
+                error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
+                if (error != IBOOTIM_E_SUCCESS) {
+                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    goto error_exit;
+                }
+            }
+
+            if (force_type == FORCE_TYPE_GRAYSCALE) {
+                error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
+                if (error != IBOOTIM_E_SUCCESS) {
+                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    goto error_exit;
+                }
+            }
+
+            error = ibootim_set_x_offset(ctx, x_offset);
             if (error != IBOOTIM_E_SUCCESS) {
                 fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
                 goto error_exit;
             }
+
+            error = ibootim_set_y_offset(ctx, y_offset);
+            if (error != IBOOTIM_E_SUCCESS) {
+                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                goto error_exit;
+            }
+        } else {
+            error = ibootim_set_type(ctx, IBOOTIM_TYPE_PNG);
+            if (error != IBOOTIM_E_SUCCESS) {
+                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                goto error_exit;
+            }
+
+            if (force_type == FORCE_TYPE_ARGB) {
+                error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
+                if (error != IBOOTIM_E_SUCCESS) {
+                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    goto error_exit;
+                }
+            }
+
+            if (force_type == FORCE_TYPE_GRAYSCALE) {
+                error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
+                if (error != IBOOTIM_E_SUCCESS) {
+                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    goto error_exit;
+                }
+            }
         }
 
-        error = ibootim_set_x_offset(ctx, x_offset);
+        print_image_info("Output Image Info", ctx);
+
+        printf("Writing to %s...\n", write_path);
+        error = ibootim_write_to_file(ctx, write_path);
         if (error != IBOOTIM_E_SUCCESS) {
             fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
             goto error_exit;
         }
 
-        error = ibootim_set_y_offset(ctx, y_offset);
-        if (error != IBOOTIM_E_SUCCESS) {
-            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-            goto error_exit;
-        }
-    } else {
-        printf("Converting to png...\n");
-
-        error = ibootim_set_type(ctx, IBOOTIM_TYPE_PNG);
-        if (error != IBOOTIM_E_SUCCESS) {
-            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-            goto error_exit;
-        }
-
-        if (force_type == FORCE_TYPE_ARGB) {
-            error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
-            if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-                goto error_exit;
-            }
-        }
-
-        if (force_type == FORCE_TYPE_GRAYSCALE) {
-            error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
-            if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-                goto error_exit;
-            }
-        }
-    }
-
-    print_image_info("Output Image Info", ctx);
-
-    printf("Writing...\n");
-    error = ibootim_write_to_file(ctx, output_filename);
-    if (error != IBOOTIM_E_SUCCESS) {
-        fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
-        goto error_exit;
+        free(indexed_output_filename);
+        indexed_output_filename = NULL;
+        ibootim_free_ctx(&ctx);
     }
 
     printf("Success!\n");
@@ -281,6 +334,7 @@ int main(int argc, char** argv) {
     return 0;
 
 error_exit:
+    free(indexed_output_filename);
     ibootim_free_ctx(&ctx);
     free(output_filename);
     free(input_filename);

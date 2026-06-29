@@ -63,7 +63,8 @@ typedef enum {
     IBOOTIM_E_BAD_POINTER             = -13,
     IBOOTIM_E_INVALID_TYPE            = -14,
     IBOOTIM_E_FILE_WRITE_FAILED       = -15,
-    IBOOTIM_E_MULTIPLE_SUB_IMAGES     = -16
+    IBOOTIM_E_MULTIPLE_SUB_IMAGES     = -16,
+    IBOOTIM_E_INDEX_OUT_OF_RANGE      = -17
 } ibootim_error_t;
 
 typedef struct ibootim_ctx* ibootim_ctx_t;
@@ -76,22 +77,41 @@ typedef struct ibootim_ctx* ibootim_ctx_t;
 const char* ibootim_strerror(ibootim_error_t error);
 
 /**
+ * @brief Counts the number of images within an ibootim file.
+ * @param[in] buffer Buffer to count from.
+ * @param[in] buffer_size Size of the input buffer.
+ * @param[out] images_count Number of images inside.
+ * @return An ibootim_error_t error code.
+ */
+ibootim_error_t ibootim_count_images_in_buffer(uint8_t* buffer, size_t buffer_size, size_t* images_count);
+
+/**
+ * @brief Counts the number of images within an ibootim file.
+ * @param[in] filename Path to the file to count from.
+ * @param[out] images_count Number of images inside.
+ * @return An ibootim_error_t error code.
+ */
+ibootim_error_t ibootim_count_images_in_file(const char* filename, size_t* images_count);
+
+/**
  * @brief Loads and decompresses an ibootim image from a buffer.
  * @param[in] buffer Buffer to load from.
  * @param[in] buffer_size Size of the input buffer.
+ * @param[in] index Index to load at. 0 will always be a valid index as long as the image itself is good.
  * @param[out] ctx Pointer to your ctx object to store the loaded file in.
  * @return An ibootim_error_t error code.
  * @note The inputted buffer is duplicated, so you can do whatever you want with the pointer you provided to @param buffer.
  */
-ibootim_error_t ibootim_load_from_buffer(uint8_t* buffer, size_t buffer_size, ibootim_ctx_t* ctx);
+ibootim_error_t ibootim_load_from_buffer(uint8_t* buffer, size_t buffer_size, size_t index, ibootim_ctx_t* ctx);
 
 /**
  * @brief Loads and decompresses an ibootim image from a file.
  * @param[in] filename Path to the file to load from.
+ * @param[in] index Index to load at. 0 will always be a valid index as long as the image itself is good.
  * @param[out] ctx Pointer to your ctx object to store the loaded file in.
  * @return An ibootim_error_t error code.
  */
-ibootim_error_t ibootim_load_from_file(const char* filename, ibootim_ctx_t* ctx);
+ibootim_error_t ibootim_load_from_file(const char* filename, size_t index, ibootim_ctx_t* ctx);
 
 /**
  * @brief Frees and nullifies an ibootim ctx.

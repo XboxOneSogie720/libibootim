@@ -39,7 +39,7 @@
 #define LZSS_DECOMPRESS_WIGGLE_ROOM    256
 
 typedef struct __attribute__((packed)) {
-	char signature[8];
+	uint8_t signature[8];
 	uint32_t adler;
 	uint32_t compression_type;
 	uint32_t colorspace;
@@ -101,6 +101,8 @@ const char* ibootim_strerror(ibootim_error_t error) {
             return "Failed to write data out to the file.";
         case IBOOTIM_E_MULTIPLE_SUB_IMAGES:
             return "Multiple sub-images are not supported.";
+        case IBOOTIM_E_INDEX_OUT_OF_RANGE:
+            return "The provided index to load at is out of range for this image.";
         default:
             return "Unknown error.";
     }
@@ -116,6 +118,97 @@ static ibootim_type_t ibootim_get_type_from_buffer(uint8_t* buffer) {
     } else {
         return IBOOTIM_TYPE_MODERN;
     }
+}
+
+static ibootim_error_t ibootim_get_offset_for_index(size_t index, uint8_t* buffer, size_t buffer_size, uint8_t** offsetted, size_t* offset_image_size) {
+    size_t offset  = 0;
+    size_t current = 0;
+
+    while (true) {
+        if (offset + sizeof(ibootim_header_t) > buffer_size) return IBOOTIM_E_INDEX_OUT_OF_RANGE;
+
+        ibootim_header_t* header = (ibootim_header_t*)(buffer + offset);
+        if (strncmp((const char*)header->signature, IBOOTIM_MAGIC_IDENT, strlen(IBOOTIM_MAGIC_IDENT)) != 0) return IBOOTIM_E_IMAGE_SIGNATURE_INVALID;
+
+        if (current == index) {
+            *offsetted = buffer + offset;
+            *offset_image_size = (header->compressed_size == 0) ? 0 : sizeof(ibootim_header_t) + header->compressed_size;
+            return IBOOTIM_E_SUCCESS;
+        }
+
+        if (header->compressed_size == 0) return IBOOTIM_E_INDEX_OUT_OF_RANGE;
+
+        size_t seek = sizeof(ibootim_header_t) + header->compressed_size;
+        if (offset + seek > buffer_size) return IBOOTIM_E_INDEX_OUT_OF_RANGE;
+
+        offset += seek;
+        current++;
+    }
+}
+
+ibootim_error_t ibootim_count_images_in_buffer(uint8_t* buffer, size_t buffer_size, size_t* images_count) {
+    if (buffer == NULL)                         return IBOOTIM_E_NULL_INPUT_BUFFER;
+    if (buffer_size < sizeof(ibootim_header_t)) return IBOOTIM_E_BUFFER_SIZE_TOO_SMALL;
+    if (images_count == NULL)                   return IBOOTIM_E_BAD_POINTER;
+
+    ibootim_type_t type = ibootim_get_type_from_buffer(buffer);
+    if (type == IBOOTIM_TYPE_UNKNOWN) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
+    if (type == IBOOTIM_TYPE_PNG) {
+        *images_count = 1;
+        return IBOOTIM_E_SUCCESS;
+    }
+
+    size_t count     = 0;
+    uint8_t* current = buffer;
+    size_t remaining = buffer_size;
+
+    while (remaining >= sizeof(ibootim_header_t)) {
+        uint8_t* img_ptr = NULL;
+        size_t img_size  = 0;
+
+        ibootim_error_t error = ibootim_get_offset_for_index(0, current, remaining, &img_ptr, &img_size);
+        if (error != IBOOTIM_E_SUCCESS) return error;
+
+        count++;
+
+        if (img_size == 0 || img_size >= remaining) break; // Legacy images only have 1 internal picture
+
+        current   += img_size;
+        remaining -= img_size;
+    }
+
+    *images_count = count;
+    return IBOOTIM_E_SUCCESS;
+}
+
+ibootim_error_t ibootim_count_images_in_file(const char* filename, size_t* images_count) {
+    if (filename == NULL)     return IBOOTIM_E_INVALID_FILENAME;
+    if (images_count == NULL) return IBOOTIM_E_BAD_POINTER;
+
+    FILE* fp = fopen(filename, "rb");
+    if (fp == NULL) return IBOOTIM_E_FILE_OPEN_FAILED;
+
+    fseek(fp, 0, SEEK_END);
+    size_t file_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    uint8_t* buf = malloc(file_size);
+    if (buf == NULL) {
+        fclose(fp);
+        return IBOOTIM_E_NO_MEM;
+    }
+
+    if (fread(buf, 1, file_size, fp) != file_size) {
+        fclose(fp);
+        free(buf);
+        return IBOOTIM_E_FILE_READ_FAILED;
+    }
+    fclose(fp);
+
+    ibootim_error_t error = ibootim_count_images_in_buffer(buf, file_size, images_count);
+    free(buf);
+    
+    return error;
 }
 
 static uint8_t ibootim_get_pixel_size_for_color_space(ibootim_colorspace_t colorSpace) {
@@ -390,22 +483,30 @@ static ibootim_error_t ibootim_load_ibootim(uint8_t* buffer, size_t buffer_size,
     return IBOOTIM_E_SUCCESS;
 }
 
-ibootim_error_t ibootim_load_from_buffer(uint8_t* buffer, size_t buffer_size, ibootim_ctx_t* ctx) {
+ibootim_error_t ibootim_load_from_buffer(uint8_t* buffer, size_t buffer_size, size_t index, ibootim_ctx_t* ctx) {
     if (buffer == NULL)                         return IBOOTIM_E_NULL_INPUT_BUFFER;
     if (buffer_size < sizeof(ibootim_header_t)) return IBOOTIM_E_BUFFER_SIZE_TOO_SMALL;
     if (ctx == NULL || *ctx != NULL)            return IBOOTIM_E_CTX_INVALID;
 
     ibootim_type_t type = ibootim_get_type_from_buffer(buffer);
+    if (type == IBOOTIM_TYPE_UNKNOWN) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
+
+    uint8_t* load_ref    = buffer;
+    size_t load_ref_size = buffer_size;
+
+    if (type != IBOOTIM_TYPE_PNG) {
+        ibootim_error_t error = ibootim_get_offset_for_index(index, buffer, buffer_size, &load_ref, &load_ref_size);
+        if (error != IBOOTIM_E_SUCCESS) return error;
+    }
+
     if (type == IBOOTIM_TYPE_PNG) {
-        return ibootim_load_png(buffer, buffer_size, ctx);
-    } else if (type == IBOOTIM_TYPE_LEGACY || type == IBOOTIM_TYPE_MODERN) {
-        return ibootim_load_ibootim(buffer, buffer_size, type, ctx);
+        return ibootim_load_png(load_ref, load_ref_size, ctx);
     } else {
-        return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
+        return ibootim_load_ibootim(load_ref, load_ref_size, type, ctx);
     }
 }
 
-ibootim_error_t ibootim_load_from_file(const char* filename, ibootim_ctx_t* ctx) {
+ibootim_error_t ibootim_load_from_file(const char* filename, size_t index, ibootim_ctx_t* ctx) {
     if (filename == NULL)            return IBOOTIM_E_INVALID_FILENAME;
     if (ctx == NULL || *ctx != NULL) return IBOOTIM_E_CTX_INVALID;
 
@@ -429,7 +530,7 @@ ibootim_error_t ibootim_load_from_file(const char* filename, ibootim_ctx_t* ctx)
     }
     fclose(fp);
 
-    ibootim_error_t err = ibootim_load_from_buffer(buf, size, ctx);
+    ibootim_error_t err = ibootim_load_from_buffer(buf, size, index, ctx);
     free(buf);
     
     return err;
