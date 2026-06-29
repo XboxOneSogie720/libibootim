@@ -132,7 +132,7 @@ static ibootim_error_t ibootim_get_offset_for_index(size_t index, uint8_t* buffe
 
         if (current == index) {
             *offsetted = buffer + offset;
-            *offset_image_size = (header->compressed_size == 0) ? 0 : sizeof(ibootim_header_t) + header->compressed_size;
+            *offset_image_size = (header->compressed_size == 0) ? buffer_size : sizeof(ibootim_header_t) + header->compressed_size;
             return IBOOTIM_E_SUCCESS;
         }
 
