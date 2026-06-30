@@ -99,8 +99,6 @@ const char* ibootim_strerror(ibootim_error_t error) {
             return "The provided type is not acceptable in the current context.";
         case IBOOTIM_E_FILE_WRITE_FAILED:
             return "Failed to write data out to the file.";
-        case IBOOTIM_E_MULTIPLE_SUB_IMAGES:
-            return "Multiple sub-images are not supported.";
         case IBOOTIM_E_INDEX_OUT_OF_RANGE:
             return "The provided index to load at is out of range for this image.";
         default:
@@ -833,7 +831,6 @@ static ibootim_error_t ibootim_serialize_ibootim(ibootim_ctx_t ctx, uint8_t** ou
     if (pixel_size == 0) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
 
     size_t expected_pixel_data_size = (size_t)ctx->width * ctx->height * pixel_size;
-    if (ctx->working_buf.size != expected_pixel_data_size) return IBOOTIM_E_MULTIPLE_SUB_IMAGES;
 
     uint32_t pixel_data_size = (uint32_t)ctx->working_buf.size;
     uint8_t* compressed = malloc(pixel_data_size);

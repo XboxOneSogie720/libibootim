@@ -63,8 +63,7 @@ typedef enum {
     IBOOTIM_E_BAD_POINTER             = -13,
     IBOOTIM_E_INVALID_TYPE            = -14,
     IBOOTIM_E_FILE_WRITE_FAILED       = -15,
-    IBOOTIM_E_MULTIPLE_SUB_IMAGES     = -16,
-    IBOOTIM_E_INDEX_OUT_OF_RANGE      = -17
+    IBOOTIM_E_INDEX_OUT_OF_RANGE      = -16
 } ibootim_error_t;
 
 typedef struct ibootim_ctx* ibootim_ctx_t;
