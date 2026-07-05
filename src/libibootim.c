@@ -889,8 +889,6 @@ static ibootim_error_t ibootim_serialize_ibootim(ibootim_ctx_t ctx, uint8_t** ou
     uint8_t pixel_size = ibootim_get_pixel_size_for_color_space(ctx->colorspace);
     if (pixel_size == 0) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
 
-    size_t expected_pixel_data_size = (size_t)ctx->width * ctx->height * pixel_size;
-
     uint32_t pixel_data_size = (uint32_t)ctx->working_buf.size;
     uint8_t* compressed = malloc(pixel_data_size);
     if (compressed == NULL) return IBOOTIM_E_NO_MEM;
