@@ -76,6 +76,30 @@ typedef struct ibootim_ctx* ibootim_ctx_t;
 const char* ibootim_strerror(ibootim_error_t error);
 
 /**
+ * @brief Creates a new ibootim ctx object from raw pixel data.
+ * @param[in] src Pointer to the raw pixel data to duplicate into the new ctx.
+ * @param[in] src_size Size of the input pixel data.
+ * @param[in] type The desired output type, or can be current. Just remember to use ibootim_set_type() to change it before writing out.
+ * @param[in] colorspace The colorspace of the input pixel data.
+ * @param[in] width Width of the input pixel data.
+ * @param[in] height Height of the input pixel data.
+ * @param[in] x_offset Desired X-offset for the output ibootim, doesn't matter if you're working with png only.
+ * @param[in] y_offset Desired Y-offset for the output ibootim, doesn't matter if you're working with png only.
+ * @param[out] ctx Pointer to the ctx structure to populate. Destination pointer should be NULL.
+ * @return An ibootim_error_t error code
+ * @note This is for advanced creation only. If you simply need to load a full png or ibootim, use ibootim_load_from_buffer() or ibootim_load_from_file().
+ */
+ibootim_error_t ibootim_new_from_pixel_data(uint8_t* src, size_t src_size, ibootim_type_t type, ibootim_colorspace_t colorspace, uint16_t width, uint16_t height, int16_t x_offset, int16_t y_offset, ibootim_ctx_t* ctx);
+
+/**
+ * @brief Duplicates an existing ibootim ctx object.
+ * @param[in] src The source ctx.
+ * @param[out] dst Pointer to store the duplicated ctx at. Pointer should initially be NULL.
+ * @return An ibootim_error_t error code.
+ */
+ibootim_error_t ibootim_duplicate_ctx(ibootim_ctx_t src, ibootim_ctx_t* dst);
+
+/**
  * @brief Counts the number of images within an ibootim file.
  * @param[in] buffer Buffer to count from.
  * @param[in] buffer_size Size of the input buffer.

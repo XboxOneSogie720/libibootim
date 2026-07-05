@@ -106,6 +106,65 @@ const char* ibootim_strerror(ibootim_error_t error) {
     }
 }
 
+ibootim_error_t ibootim_new_from_pixel_data(uint8_t* src, size_t src_size, ibootim_type_t type, ibootim_colorspace_t colorspace, uint16_t width, uint16_t height, int16_t x_offset, int16_t y_offset, ibootim_ctx_t* ctx) {
+    if (ctx == NULL || *ctx != NULL) return IBOOTIM_E_CTX_INVALID;
+    if (src == NULL)                 return IBOOTIM_E_BAD_POINTER;
+    if (src_size < 8)                return IBOOTIM_E_BUFFER_SIZE_TOO_SMALL;
+
+    ibootim_ctx_t tmp = malloc(sizeof(struct ibootim_ctx));
+    if (tmp == NULL) return IBOOTIM_E_NO_MEM;
+
+    tmp->working_buf.data = malloc(src_size);
+    if (tmp->working_buf.data == NULL) {
+        free(tmp);
+        return IBOOTIM_E_NO_MEM;
+    }
+
+    memcpy(tmp->working_buf.data, src, src_size);
+    tmp->working_buf.size = src_size;
+    tmp->type             = type;
+    tmp->compression_type = IBOOTIM_COMPRESSION_LZSS_IDENT;
+    tmp->colorspace       = colorspace;
+    tmp->width            = width;
+    tmp->height           = height;
+    tmp->x_offset         = x_offset;
+    tmp->y_offset         = y_offset;
+
+    *ctx = tmp;
+
+    return IBOOTIM_E_SUCCESS;
+}
+
+ibootim_error_t ibootim_duplicate_ctx(ibootim_ctx_t src, ibootim_ctx_t* dst) {
+    if (src == NULL)                   return IBOOTIM_E_CTX_INVALID;
+    if (dst == NULL || *dst != NULL)   return IBOOTIM_E_BAD_POINTER;
+    if (src->working_buf.data == NULL) return IBOOTIM_E_CTX_INVALID;
+    if (src->working_buf.size < 8)     return IBOOTIM_E_BUFFER_SIZE_TOO_SMALL;
+
+    ibootim_ctx_t tmp = malloc(sizeof(struct ibootim_ctx));
+    if (tmp == NULL) return IBOOTIM_E_NO_MEM;
+
+    tmp->working_buf.data = malloc(src->working_buf.size);
+    if (tmp->working_buf.data == NULL) {
+        free(tmp);
+        return IBOOTIM_E_NO_MEM;
+    }
+
+    memcpy(tmp->working_buf.data, src->working_buf.data, src->working_buf.size);
+    tmp->working_buf.size = src->working_buf.size;
+    tmp->type             = src->type;
+    tmp->compression_type = src->compression_type;
+    tmp->colorspace       = src->colorspace;
+    tmp->width            = src->width;
+    tmp->height           = src->height;
+    tmp->x_offset         = src->x_offset;
+    tmp->y_offset         = src->y_offset;
+
+    *dst = tmp;
+
+    return IBOOTIM_E_SUCCESS;
+}
+
 static ibootim_type_t ibootim_get_type_from_buffer(uint8_t* buffer) {
     if (png_sig_cmp(buffer, 0, 8) == 0) return IBOOTIM_TYPE_PNG;
     if (strncmp((const char*)buffer, IBOOTIM_MAGIC_IDENT, strlen(IBOOTIM_MAGIC_IDENT)) != 0) return IBOOTIM_TYPE_UNKNOWN;
