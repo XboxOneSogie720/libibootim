@@ -1,0 +1,9 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+
+Name: libibootim
+Description: All the essentials you need when working with Apple iBoot images and PNGs.
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -libootim
+Cflags: -I${includedir}

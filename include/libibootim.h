@@ -69,6 +69,12 @@ typedef enum {
 typedef struct ibootim_ctx* ibootim_ctx_t;
 
 /**
+ * @brief Gets the library version as a string.
+ * @return The version of the library.
+ */
+const char* ibootim_version_str(void);
+
+/**
  * @brief Gets an error message for the given error code.
  * @param[in] error The error code to reference.
  * @return A human-readable error message.

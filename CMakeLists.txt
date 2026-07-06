@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(libibootim C)
+project(libibootim VERSION 1.1 LANGUAGES C)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 set(CMAKE_C_STANDARD 11)
@@ -20,6 +20,10 @@ target_link_libraries(ibootim
     PRIVATE ${PNG_LIBRARIES}
 )
 
+target_compile_definitions(ibootim PRIVATE
+    LIBIBOOTIM_VERSION="${PROJECT_VERSION}"
+)
+
 # CLI tool
 add_executable(ibootimutil tools/ibootimutil.c)
 
@@ -38,6 +42,17 @@ install(FILES include/libibootim.h
 
 install(TARGETS ibootimutil
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# pkg-config
+configure_file(
+    ${CMAKE_SOURCE_DIR}/libibootim.pc.in
+    ${CMAKE_BINARY_DIR}/libibootim.pc
+    @ONLY
+)
+
+install(FILES ${CMAKE_BINARY_DIR}/libibootim.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
 # Uninstall

@@ -123,6 +123,8 @@ char* path_add_index(const char* path, size_t index) {
 }
 
 int main(int argc, char** argv) {
+    printf("libibootim version - %s\n", ibootim_version_str());
+
     int opt                             = 0;
     char* input_filename                = NULL;
     char* output_filename               = NULL;

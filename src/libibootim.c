@@ -65,6 +65,8 @@ struct ibootim_ctx {
     int16_t x_offset, y_offset;
 };
 
+const char* ibootim_version_str(void) { return LIBIBOOTIM_VERSION; }
+
 const char* ibootim_strerror(ibootim_error_t error) {
     switch (error) {
         case IBOOTIM_E_SUCCESS:
