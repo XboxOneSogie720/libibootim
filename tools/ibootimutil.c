@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
     size_t num_images = 0;
     error = ibootim_count_images_in_file(input_filename, &num_images);
     if (error != IBOOTIM_E_SUCCESS) {
-        fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+        fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
         free(output_filename);
         free(input_filename);
         return -1;
@@ -240,7 +240,7 @@ int main(int argc, char** argv) {
         printf("Loading file at index %zu...\n", i);
         error = ibootim_load_from_file(input_filename, i, &ctx);
         if (error != IBOOTIM_E_SUCCESS) {
-            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+            fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
             free(output_filename);
             free(input_filename);
             return -1;
@@ -251,21 +251,21 @@ int main(int argc, char** argv) {
         ibootim_type_t type = IBOOTIM_TYPE_UNKNOWN;
         error = ibootim_get_type(ctx, &type);
         if (error != IBOOTIM_E_SUCCESS) {
-            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+            fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
             goto error_exit;
         }
 
         if (type == IBOOTIM_TYPE_PNG) {
             error = ibootim_set_type(ctx, IBOOTIM_TYPE_MODERN);
             if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                 goto error_exit;
             }
 
             if (force_type == FORCE_TYPE_ARGB) {
                 error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
                 if (error != IBOOTIM_E_SUCCESS) {
-                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                     goto error_exit;
                 }
             }
@@ -273,33 +273,33 @@ int main(int argc, char** argv) {
             if (force_type == FORCE_TYPE_GRAYSCALE) {
                 error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
                 if (error != IBOOTIM_E_SUCCESS) {
-                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                     goto error_exit;
                 }
             }
 
             error = ibootim_set_x_offset(ctx, x_offset);
             if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                 goto error_exit;
             }
 
             error = ibootim_set_y_offset(ctx, y_offset);
             if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                 goto error_exit;
             }
         } else {
             error = ibootim_set_type(ctx, IBOOTIM_TYPE_PNG);
             if (error != IBOOTIM_E_SUCCESS) {
-                fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                 goto error_exit;
             }
 
             if (force_type == FORCE_TYPE_ARGB) {
                 error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_ARGB);
                 if (error != IBOOTIM_E_SUCCESS) {
-                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                     goto error_exit;
                 }
             }
@@ -307,7 +307,7 @@ int main(int argc, char** argv) {
             if (force_type == FORCE_TYPE_GRAYSCALE) {
                 error = ibootim_set_colorspace(ctx, IBOOTIM_COLORSPACE_GRAYSCALE);
                 if (error != IBOOTIM_E_SUCCESS) {
-                    fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+                    fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
                     goto error_exit;
                 }
             }
@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
         printf("Writing to %s...\n", write_path);
         error = ibootim_write_to_file(ctx, write_path);
         if (error != IBOOTIM_E_SUCCESS) {
-            fprintf(stderr, "Error: %s\n", ibootim_strerror(error));
+            fprintf(stderr, "Error: %s.\n", ibootim_strerror(error));
             goto error_exit;
         }
 
