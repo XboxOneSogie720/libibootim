@@ -84,8 +84,8 @@ void print_image_info(const char* title, ibootim_ctx_t ctx) {
         "    X-offset:   %d\n"
         "    Y-offset:   %d\n",
         title,
-        (ibootim_get_type(ctx, &type)             == IBOOTIM_E_SUCCESS) ? type_to_str(type) : "N/A",
-        (ibootim_get_colorspace(ctx, &colorspace) == IBOOTIM_E_SUCCESS) ? colorspace_to_str(colorspace) : "N/A",
+        (ibootim_get_type(ctx, &type)             == IBOOTIM_E_SUCCESS) ? ibootim_type_to_str(type) : "N/A",
+        (ibootim_get_colorspace(ctx, &colorspace) == IBOOTIM_E_SUCCESS) ? ibootim_colorspace_to_str(colorspace) : "N/A",
         (ibootim_get_width(ctx, &width)           == IBOOTIM_E_SUCCESS) ? width : width,
         (ibootim_get_height(ctx, &height)         == IBOOTIM_E_SUCCESS) ? height : height,
         (ibootim_get_x_offset(ctx, &x_offset)     == IBOOTIM_E_SUCCESS) ? x_offset : x_offset,

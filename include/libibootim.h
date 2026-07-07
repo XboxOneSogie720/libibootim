@@ -185,14 +185,14 @@ ibootim_error_t ibootim_set_colorspace(ibootim_ctx_t ctx, ibootim_colorspace_t c
  * @param[in] type Type of image.
  * @return A string, duh.
  */
-const char* type_to_str(ibootim_type_t type);
+const char* ibootim_type_to_str(ibootim_type_t type);
 
 /**
  * @brief Gets a string representation for the given colorspace.
  * @param[in] type Type of image.
  * @return A string, duh.
  */
-const char* colorspace_to_str(ibootim_colorspace_t colorspace);
+const char* ibootim_colorspace_to_str(ibootim_colorspace_t colorspace);
 
 /**
  * @brief Gets the ibootim width.

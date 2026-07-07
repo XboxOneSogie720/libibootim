@@ -692,7 +692,7 @@ ibootim_error_t ibootim_set_colorspace(ibootim_ctx_t ctx, ibootim_colorspace_t c
     return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
 }
 
-const char* type_to_str(ibootim_type_t type) {
+const char* ibootim_type_to_str(ibootim_type_t type) {
     switch (type) {
         case IBOOTIM_TYPE_PNG:
             return "PNG";
@@ -705,7 +705,7 @@ const char* type_to_str(ibootim_type_t type) {
     }
 }
 
-const char* colorspace_to_str(ibootim_colorspace_t colorspace) {
+const char* ibootim_colorspace_to_str(ibootim_colorspace_t colorspace) {
     switch (colorspace) {
         case IBOOTIM_COLORSPACE_GRAYSCALE:
             return "Grayscale";
