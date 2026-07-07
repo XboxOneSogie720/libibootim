@@ -70,41 +70,41 @@ const char* ibootim_version_str(void) { return LIBIBOOTIM_VERSION; }
 const char* ibootim_strerror(ibootim_error_t error) {
     switch (error) {
         case IBOOTIM_E_SUCCESS:
-            return "Success.";
+            return "Success";
         case IBOOTIM_E_NULL_INPUT_BUFFER:
-            return "The provided input buffer is NULL.";
+            return "The provided input buffer is NULL";
         case IBOOTIM_E_BUFFER_SIZE_TOO_SMALL:
-            return "The provided buffer size is too small to be valid.";
+            return "The provided buffer size is too small to be valid";
         case IBOOTIM_E_CTX_INVALID:
-            return "The provided context is in an invalid state.";
+            return "The provided context is in an invalid state";
         case IBOOTIM_E_UNKNOWN_IMAGE_TYPE:
-            return "The provided image's type is unknown.";
+            return "The provided image's type is unknown";
         case IBOOTIM_E_NO_MEM:
-            return "No memory available.";
+            return "No memory available";
         case IBOOTIM_E_INVALID_FILENAME:
-            return "Null or invalid filename.";
+            return "Null or invalid filename";
         case IBOOTIM_E_FILE_OPEN_FAILED:
             return "Failed to open the provided file. Does it exist?";
         case IBOOTIM_E_FILE_READ_FAILED:
-            return "Failed to read data from the file. Please try again.";
+            return "Failed to read data from the file. Please try again";
         case IBOOTIM_E_LZSS_XPRESSION_ERROR:
-            return "An error occured during xpression of an LZSS payload.";
+            return "An error occured during xpression of an LZSS payload";
         case IBOOTIM_E_PNG_HANDLING_FAILED:
-            return "An error occured while handling PNG data.";
+            return "An error occured while handling PNG data";
         case IBOOTIM_E_PNG_INVALID:
-            return "The provided PNG image is invalid.";
+            return "The provided PNG image is invalid";
         case IBOOTIM_E_IMAGE_SIGNATURE_INVALID:
-            return "The provided (modern) ibootim's signature is invalid.";
+            return "The provided (modern) ibootim's signature is invalid";
         case IBOOTIM_E_BAD_POINTER:
-            return "The provided pointer is invalid.";
+            return "The provided pointer is invalid";
         case IBOOTIM_E_INVALID_TYPE:
-            return "The provided type is not acceptable in the current context.";
+            return "The provided type is not acceptable in the current context";
         case IBOOTIM_E_FILE_WRITE_FAILED:
-            return "Failed to write data out to the file.";
+            return "Failed to write data out to the file";
         case IBOOTIM_E_INDEX_OUT_OF_RANGE:
-            return "The provided index to load at is out of range for this image.";
+            return "The provided index to load at is out of range for this image";
         default:
-            return "Unknown error.";
+            return "Unknown error";
     }
 }
 
