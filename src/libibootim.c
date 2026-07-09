@@ -36,7 +36,7 @@
 
 #define IBOOTIM_MAGIC_IDENT            "iBootIm"
 #define IBOOTIM_COMPRESSION_LZSS_IDENT 0x6c7a7373
-#define LZSS_DECOMPRESS_WIGGLE_ROOM    256
+#define LZSS_XPRESS_WIGGLE_ROOM        256
 
 typedef struct __attribute__((packed)) {
 	uint8_t signature[8];
@@ -301,7 +301,7 @@ static ibootim_error_t ibootim_decompress_if_needed(ibootim_ctx_t ctx) {
     uint8_t pixel_size = ibootim_get_pixel_size_for_color_space(ctx->colorspace);
     if (pixel_size == 0) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
 
-    size_t expected_uncompressed_size = (size_t)ctx->width * ctx->height * pixel_size + LZSS_DECOMPRESS_WIGGLE_ROOM;
+    size_t expected_uncompressed_size = (size_t)ctx->width * ctx->height * pixel_size + LZSS_XPRESS_WIGGLE_ROOM;
 
     uint8_t* compressed_buf = ctx->working_buf.data + sizeof(ibootim_header_t);
     size_t compressed_size = ctx->working_buf.size - sizeof(ibootim_header_t);
@@ -891,10 +891,13 @@ static ibootim_error_t ibootim_serialize_ibootim(ibootim_ctx_t ctx, uint8_t** ou
     if (pixel_size == 0) return IBOOTIM_E_UNKNOWN_IMAGE_TYPE;
 
     uint32_t pixel_data_size = (uint32_t)ctx->working_buf.size;
-    uint8_t* compressed = malloc(pixel_data_size);
+
+    // LZSS can expand incompressible input (e.g. random/high-entropy pixel data)
+    uint32_t compressed_capacity = pixel_data_size + (pixel_data_size / 8) + LZSS_XPRESS_WIGGLE_ROOM;
+    uint8_t* compressed = malloc(compressed_capacity);
     if (compressed == NULL) return IBOOTIM_E_NO_MEM;
 
-    uint8_t* compressed_end = compress_lzss(compressed, pixel_data_size, ctx->working_buf.data, pixel_data_size);
+    uint8_t* compressed_end = compress_lzss(compressed, compressed_capacity, ctx->working_buf.data, pixel_data_size);
     if (compressed_end == NULL) {
         free(compressed);
         return IBOOTIM_E_LZSS_XPRESSION_ERROR;
