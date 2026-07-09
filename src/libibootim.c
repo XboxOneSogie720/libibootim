@@ -111,7 +111,6 @@ const char* ibootim_strerror(ibootim_error_t error) {
 ibootim_error_t ibootim_new_from_pixel_data(uint8_t* src, size_t src_size, ibootim_type_t type, ibootim_colorspace_t colorspace, uint16_t width, uint16_t height, int16_t x_offset, int16_t y_offset, ibootim_ctx_t* ctx) {
     if (ctx == NULL || *ctx != NULL) return IBOOTIM_E_CTX_INVALID;
     if (src == NULL)                 return IBOOTIM_E_BAD_POINTER;
-    if (src_size < 8)                return IBOOTIM_E_BUFFER_SIZE_TOO_SMALL;
 
     ibootim_ctx_t tmp = malloc(sizeof(struct ibootim_ctx));
     if (tmp == NULL) return IBOOTIM_E_NO_MEM;

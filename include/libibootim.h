@@ -254,7 +254,7 @@ ibootim_error_t ibootim_get_buffer(ibootim_ctx_t ctx, uint8_t** buffer, size_t* 
 /**
  * @brief Writes the ibootim image out to a buffer according to the internal type.
  * @param[in] ctx The loaded ctx.
- * @param[out] buffer Pointer to the buffer to write the serialized data to.
+ * @param[out] buffer Pointer to the buffer to write the serialized data to. Should be NULL as it is allocated for you.
  * @param[out] size Pointer to store the buffer's size at.
  * @return An ibootim_error_t error code.
  */
